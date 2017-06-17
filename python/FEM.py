@@ -42,8 +42,18 @@ class FemProblem:
 
         return m_rigidez
 
-    def LD(self):
+    def calcLD(self, ld_func):
+        ld = np.zeros(self._graus)
+
         for elem in self.elementos:
+            pontos, pesos = elem.pontosIntegracao()
+            for i, no in enumerate(elem.nos):
+                if no.livre:
+                    for nk in range(len(pontos)):
+                        x, y = elem.coordGlobal(pontos[nk][0], pontos[nk][1])
+                        ld[no.matrizPos] += pesos[i]*ld_func(x,y)*elem.phis()[i](pontos[nk][0], pontos[nk][1])
+
+        return ld
              
 
 class No:
@@ -82,6 +92,16 @@ class Elemento():
         pesos = [0.25, 0.25, 0.25, 0.25]
 
         return pontos, pesos
+
+    def coordGlobal(self, ep, mu):
+        x = 0
+        y = 0
+
+        for i,phi in enumerate(self.phis()):
+            x += self.nos[i].x*phi(ep,mu)
+            y += self.nos[i].y*phi(ep,mu)
+
+        return x, y
 
     def rigidezContribuicao(self):
         contribuicoes = []
@@ -153,6 +173,7 @@ class Elemento():
         dev_phi2 = lambda ep, mu: 0.25*(1+ep)*(1+mu)
         dev_phi3 = lambda ep, mu: 0.25*(1-ep)*(1+mu)
         return [phi0, phi1, phi2, phi3]
+
 
 def criarMalha(N):
     h = 1.0/N

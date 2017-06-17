@@ -1,6 +1,6 @@
 import unittest
 from FEM import *
-
+from math import sin, pi
 
 class TestStringMethods(unittest.TestCase):
 
@@ -60,6 +60,10 @@ class TestStringMethods(unittest.TestCase):
         matriz = fem.calcMatrizRigidez()
 
         print matriz
+
+        ld_func = lambda x,y: -2*pi*pi*sin(pi*x)*sin(pi*y)
+        
+        print fem.calcLD(ld_func)
 
 
 if __name__ == '__main__':
