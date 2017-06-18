@@ -5,7 +5,7 @@ Resolucao do laplaciano em 2 dimensoes
 
 import numpy as np
 import numpy.linalg as LA
-import math
+from math import *
 
 
 class FemProblem:
@@ -50,8 +50,10 @@ class FemProblem:
             for i, no in enumerate(elem.nos):
                 if no.livre:
                     for nk in range(len(pontos)):
-                        x, y = elem.coordGlobal(pontos[nk][0], pontos[nk][1])
-                        ld[no.matrizPos] += pesos[i]*ld_func(x,y)*elem.phis()[i](pontos[nk][0], pontos[nk][1])
+                        ep, mu = pontos[nk][0], pontos[nk][1]
+                        x, y = elem.coordGlobal(ep, mu)
+                        detjac = LA.det(elem.calcJac(ep, mu))
+                        ld[no.matrizPos] += pesos[i]*ld_func(x,y)*elem.phis()[i](ep, mu)*abs(detjac)
 
         return ld
              
@@ -86,10 +88,10 @@ class Elemento():
 
     def pontosIntegracao(self):
 
-        x = math.sqrt(3)/3
+        x = sqrt(3)/3
 
         pontos = [(-x,-x), (x,-x), (x,x), (-x,x)]
-        pesos = [0.25, 0.25, 0.25, 0.25]
+        pesos = [1,1,1,1]
 
         return pontos, pesos
 
@@ -121,9 +123,10 @@ class Elemento():
 
                             devGlobal = self.calcDevGlobal(ep, mu)
 
+
                             jac = self.calcJac(ep, mu)
 
-                            integral += pesos[nk] * (devGlobal[(0,i)]*devGlobal[(0,j)] + devGlobal[(1,i)]*devGlobal[(1,j)]) * LA.det(jac)
+                            integral += pesos[nk] * (devGlobal[(0,i)]*devGlobal[(0,j)] + devGlobal[(1,i)]*devGlobal[(1,j)]) * abs(LA.det(jac))
 
 
                         contribuicoes.append([(no1.matrizPos, no2.matrizPos), integral])
@@ -211,5 +214,25 @@ def criarMalha(N):
     return elementos, nos
 
 
+def resolver(n, sol_func, ld_func):
+    elementos, nos = criarMalha(n)
+    fem = FemProblem(elementos, nos)
+    
+    matriz = fem.calcMatrizRigidez()
+    ld = fem.calcLD(ld_func)
+
+    x = LA.solve(matriz, -ld)
+
+    livres = fem.calcGrausDeLiberdade()
+    erro = 0.0
+    for no in nos:
+        if no.livre:
+            erro += abs(x[no.matrizPos] - sol_func(no.x, no.y))
+
+
+    print "erro = ", erro/livres
+
 if __name__ == '__main__':
-    criarMalha(4)
+    sol_func = lambda x,y: sin(pi*x)*sin(pi*y)
+    ld_func = lambda x,y: -2*pi*pi*sin(pi*x)*sin(pi*y)
+    resolver(20, sol_func, ld_func)

@@ -1,6 +1,7 @@
 import unittest
 from FEM import *
 from math import sin, pi
+import numpy.linalg as LA
 
 class TestStringMethods(unittest.TestCase):
 
@@ -36,6 +37,24 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(nos[18].matrizPos, 8)
 
 
+        x,y = elem.coordGlobal(-1,-1)
+        self.assertAlmostEqual(x, 0.5, 10)
+        self.assertAlmostEqual(y, 0.5, 10)
+
+        x,y = elem.coordGlobal(1,-1)
+        self.assertAlmostEqual(x, 0.75, 10)
+        self.assertAlmostEqual(y, 0.5, 10)
+
+        x,y = elem.coordGlobal(1,1)
+        self.assertAlmostEqual(x, 0.75, 10)
+        self.assertAlmostEqual(y, 0.75, 10)
+
+        x,y = elem.coordGlobal(-1,1)
+        self.assertAlmostEqual(x, 0.5, 10)
+        self.assertAlmostEqual(y, 0.75, 10)
+
+
+
         contribuicoes = elem.rigidezContribuicao()
 
         self.assertEqual(len(contribuicoes), 16)
@@ -45,6 +64,25 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(contribuicoes[2][0], (4, 8))
         self.assertEqual(contribuicoes[3][0], (4, 7))
 
+        self.assertEqual(contribuicoes[4][0], (5, 4))
+        self.assertEqual(contribuicoes[5][0], (5, 5))
+        self.assertEqual(contribuicoes[6][0], (5, 8))
+        self.assertEqual(contribuicoes[7][0], (5, 7))
+
+        self.assertEqual(contribuicoes[ 8][0], (8, 4))
+        self.assertEqual(contribuicoes[ 9][0], (8, 5))
+        self.assertEqual(contribuicoes[10][0], (8, 8))
+        self.assertEqual(contribuicoes[11][0], (8, 7))
+
+        self.assertEqual(contribuicoes[12][0], (7, 4))
+        self.assertEqual(contribuicoes[13][0], (7, 5))
+        self.assertEqual(contribuicoes[14][0], (7, 8))
+        self.assertEqual(contribuicoes[15][0], (7, 7))
+
+
+        self.assertAlmostEqual(contribuicoes[0][1], 2.0/3, 10)
+        self.assertAlmostEqual(contribuicoes[2][1], -1.0/3, 10)
+
 
         D = elem.coordMatriz()
         self.assertEqual(D[(0,0)], 0.50); self.assertEqual(D[(0,1)], 0.50); 
@@ -53,6 +91,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(D[(3,0)], 0.50); self.assertEqual(D[(3,1)], 0.75);
 
         print elem.calcJac(-1,-1)
+        print elem.calcJacInv(-1,-1)
 
 
         print D
@@ -63,7 +102,10 @@ class TestStringMethods(unittest.TestCase):
 
         ld_func = lambda x,y: -2*pi*pi*sin(pi*x)*sin(pi*y)
         
-        print fem.calcLD(ld_func)
+        ld = fem.calcLD(ld_func)
+        print ld
+
+        print LA.solve(matriz, -ld)
 
 
 if __name__ == '__main__':
