@@ -1,8 +1,11 @@
 
 static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
-
+#include <iostream>
 #include <petscksp.h>
+#include "fem.h"
 
+
+using namespace std;
 
 int main(int argc, char **args) {
 	Vec x;
@@ -37,6 +40,11 @@ int main(int argc, char **args) {
 
 
 	ierr = PetscFinalize();CHKERRQ(ierr);
+
+
+	  Rectangle rect;
+	  rect.set_values (3,4);
+	  cout << "area: " << rect.area() << "\n";
 
 	return 0;
 }

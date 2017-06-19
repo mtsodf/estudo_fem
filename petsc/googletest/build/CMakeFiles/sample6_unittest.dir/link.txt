@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/sample6_unittest.dir/samples/sample6_unittest.cc.o  -o sample6_unittest  -L/home/mateus/Development/C++/libraries/googletest/googletest/build/src -rdynamic libgtest_main.a libgtest.a -lpthread -Wl,-rpath,/home/mateus/Development/C++/libraries/googletest/googletest/build/src 

@@ -11,5 +11,11 @@ find_package(MPI)
 
 include_directories(${MPI_C_INCLUDE_PATH})
 
-add_executable(CriandoVetor CriandoVetor.c)
+add_subdirectory(googletest)
+
+add_executable(CriandoVetor CriandoVetor.cpp no.cpp)
 target_link_libraries(CriandoVetor ${PETSC_LIBRARIES} ${MPI_LIBRARIES})
+
+add_executable(sampledsa1 sample.cc sample_unittest.cc)
+target_link_libraries(sampledsa1 gtest_main)
+
