@@ -30,7 +30,7 @@ int main(int argc, char **args) {
 	ierr = VecAssemblyBegin(x);CHKERRQ(ierr); 
 	ierr = VecAssemblyEnd(x);CHKERRQ(ierr);
 
-	
+	ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 
 
 	ierr = VecDestroy(&x);CHKERRQ(ierr);
