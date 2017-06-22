@@ -20,6 +20,7 @@ target_link_libraries(CriandoVetor ${PETSC_LIBRARIES} ${MPI_LIBRARIES})
 add_executable(CriarMalha CriarMalha.cpp)
 
 
-add_executable(sampledsa1 sample.cc sample_unittest.cc)
-target_link_libraries(sampledsa1 gtest_main)
+add_executable(fem_unittest fem.cpp fem_unittest.cpp)
+target_link_libraries(fem_unittest gtest_main)
+
 
