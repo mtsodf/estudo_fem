@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "fem.h"
 #include <math.h>
+#include <stdexcept>
 
 
 double det3(double ** A){
@@ -39,24 +40,105 @@ void inversa3(double **A, double **Ainv){
 	
 }
 
-Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, double y2){
-	x = (double *) malloc(sizeof(double)*3);
-	y = (double *) malloc(sizeof(double)*3);
+No::No(double x, double y){
+	this->x=x;
+	this->y=y;
+}
 
-	x[0]=x0; x[1]=x1; x[2]=x2;
-	y[0]=y0; y[1]=y1; y[2]=y2;
+void FemCaso::carregarNos(char* filename){
+	FILE *arq;
+	double x0, y0, x1, y1, x2, y2;
+	arq = fopen(filename, "r");
 
-	qtd_pontos = 3;
+	int qtd_nos;
 
+	nos.reserve(qtd_nos);    // make room for 10 elements
+
+
+	fscanf(arq, "%d", &qtd_nos);
+	for (int i = 0; i < qtd_nos; ++i)
+	{
+		fscanf(arq, "%lf %lf", &x0, &y0);
+		nos.push_back(No(x0, y0));
+	}
+	
+
+	fclose(arq);
+}
+
+void FemCaso::carregarElementos(char* filename){
+	FILE *arq;
+	arq = fopen(filename, "r");
+	int no_ind;
+	int qtd_elems;
+
+	nos.reserve(qtd_elems);    // make room for 10 elements
+
+
+	fscanf(arq, "%d", &qtd_elems);
+	for (int i = 0; i < qtd_elems; ++i)
+	{	
+		Triangulo elem = Triangulo();
+		for (int i = 0; i < 3; ++i)
+		{
+			fscanf(arq, "%d", &no_ind);
+		}
+		
+		elementos.push_back(elem);
+	}
+	
+
+	fclose(arq);
+}
+
+Elemento::~Elemento(){
 
 }
 
-double Triangulo:: area(){
-	double dx1 = x[1] - x[0];
-	double dx2 = x[2] - x[0];
+double Elemento::func_form(int pos, double x, double y){
+	return 0.0;
+}
 
-	double dy1 = y[1] - y[0];
-	double dy2 = y[2] - y[0];
+double Elemento::dfunc_form(int pos, int var, double x, double y){
+	return 0.0;
+	throw std::invalid_argument( "dfunc_form so pode ter var=0 ou var=1" );
+}
+
+Triangulo::~Triangulo(){
+
+}
+
+Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, double y2){
+
+	nos.reserve(3);
+
+	nos.push_back(No(x0,y0));
+	nos.push_back(No(x1,y1));
+	nos.push_back(No(x2,y2));
+
+	qtd_nos = 3;
+
+}
+
+double k_func_2(double x, double y){
+	return 2;
+}
+
+Triangulo::Triangulo(){
+	nos.reserve(3);
+	qtd_nos = 3;
+	k_func = k_func_2;
+
+}
+
+
+
+double Triangulo:: area(){
+	double dx1 = nos[1].x - nos[0].x;
+	double dx2 = nos[2].x - nos[0].x;
+
+	double dy1 = nos[1].y - nos[0].y;
+	double dy2 = nos[2].y - nos[0].y;
 
 	return 0.5 * abs( dx1*dy2 - dx2*dy1 );
 }
@@ -64,26 +146,42 @@ double Triangulo:: area(){
 
 double** Triangulo:: get_M(){
 	if(M == NULL){
-		M = (double **) malloc(sizeof(double *) * qtd_pontos);
-		for (int i = 0; i < qtd_pontos; ++i) M[i] = (double *) malloc(sizeof(double) * qtd_pontos);
+		M = (double **) malloc(sizeof(double *) * qtd_nos);
+		for (int i = 0; i < qtd_nos; ++i) M[i] = (double *) malloc(sizeof(double) * qtd_nos);
 		
-		M[0][0] =    1; M[1][0] =    1; M[2][0] =    0;
-		M[0][1] = x[0]; M[1][1] = x[1]; M[2][1] = x[2];
-		M[0][2] = y[0]; M[1][2] = y[1]; M[2][2] = y[2];
+		M[0][0] =        1; M[1][0] =        1; M[2][0] =    0;
+		M[0][1] = nos[0].x; M[1][1] = nos[1].x; M[2][1] = nos[2].x;
+		M[0][2] = nos[0].y; M[1][2] = nos[1].y; M[2][2] = nos[2].y;
 
 	} 	
 
 	return M;
 }
 
+double Triangulo::func_form(int pos, double x, double y){
+	double ** Minv = get_Minv();
+
+	return Minv[0][pos] + Minv[1][pos]*x + Minv[2][pos]*y;
+}
+
+double Triangulo::dfunc_form(int pos, int var, double x, double y){
+	double ** Minv = get_Minv();
+	//derivada em relacao a x
+	if(var == 0 || var == 1){
+		return M[var+1][pos];
+	}
+
+
+	throw std::invalid_argument( "dfunc_form so pode ter var=0 ou var=1" );
+
+}
+
 double** Triangulo:: get_Minv(){
 	if(Minv == NULL){
 		double ** M = get_M();
-		Minv = (double **) malloc(sizeof(double *) * qtd_pontos);
+		Minv = (double **) malloc(sizeof(double *) * qtd_nos);
 		
-		for (int i = 0; i < qtd_pontos; ++i) Minv[i] = (double *) malloc(sizeof(double) * qtd_pontos);
-
-
+		for (int i = 0; i < qtd_nos; ++i) Minv[i] = (double *) malloc(sizeof(double) * qtd_nos);
 
 	} 	
 

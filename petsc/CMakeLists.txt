@@ -13,7 +13,7 @@ include_directories(${MPI_C_INCLUDE_PATH})
 
 add_subdirectory(googletest)
 
-add_executable(CriandoVetor CriandoVetor.cpp no.cpp)
+add_executable(CriandoVetor CriandoVetor.cpp fem.cpp)
 target_link_libraries(CriandoVetor ${PETSC_LIBRARIES} ${MPI_LIBRARIES})
 
 

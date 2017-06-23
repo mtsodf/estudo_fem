@@ -24,6 +24,7 @@ int main(int argc, char* argv[]){
 	double x, y;
 
 	//Escrevendo Nos
+	fprintf(nos, "%d\n", n*n);
 	for (int j = 0; j < n; ++j)
 	{	
 		y = j*h;
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]){
 
 	int qtd_triangulos = (n - 1) * (n - 1) * 2;
 
+	fprintf(elementos, "%d\n", (n-1)*(n-1));
 	for (int j = 0; j < n - 1; ++j)
 	{
 		for (int i = 0; i < n - 1; ++i)

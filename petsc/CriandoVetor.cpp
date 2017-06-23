@@ -15,6 +15,17 @@ int main(int argc, char **args) {
 	PetscScalar val;
 	int i;
 
+
+	FemCaso fem = FemCaso();
+
+	fem.carregarNos("nos.txt");
+	fem.carregarElementos("elementos.txt");
+
+
+	//Triangulo& a =  fem.elementos[0];
+	printf("k = %lf\n", fem.elementos[0].k_func(0,0));
+
+/*
 	ierr = PetscOptionsGetInt(PETSC_NULL, PETSC_NULL, "-N", &N, PETSC_NULL);CHKERRQ(ierr); 
 	ierr = VecCreate(PETSC_COMM_WORLD, &x);CHKERRQ(ierr);
 	ierr = VecSetSizes(x, PETSC_DECIDE, N);CHKERRQ(ierr);
@@ -47,4 +58,5 @@ int main(int argc, char **args) {
 	  cout << "area: " << rect.area() << "\n";
 
 	return 0;
+*/
 }

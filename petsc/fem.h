@@ -1,3 +1,5 @@
+#include <vector>
+
 double det3(double **);
 void inversa3(double**, double **);
 
@@ -9,20 +11,30 @@ class Rectangle {
 };
 
 class No {
-	double x, y;
+	public:
+		double x, y;
+		No(double, double);
 };
 
 class Elemento{
 	public:
-		double *x, *y;
-		int qtd_pontos;
+		std::vector<No> nos;
+		int qtd_nos;
+		char tipo_contorno;
+		virtual double func_form(int, double, double);
+		virtual double dfunc_form(int, int, double, double);
+		double (*k_func) (double,double);
+		~Elemento();
 };
 
 class Triangulo: public Elemento{
 	public:
 		Triangulo(double, double, double, double, double, double);
+		Triangulo();
 		double area();
 		double func_form(int, double, double);
+		double dfunc_form(int, int, double, double);
+		~Triangulo();
 	private:
 		double **M, **Minv;
 		double ** get_M();
@@ -31,3 +43,10 @@ class Triangulo: public Elemento{
 
 
 
+class FemCaso{
+	public:
+		std::vector<No> nos;
+		std::vector<Elemento> elementos;
+		void carregarNos(char*);
+		void carregarElementos(char*);
+};
