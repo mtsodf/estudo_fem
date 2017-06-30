@@ -40,26 +40,34 @@ void inversa3(double **A, double **Ainv){
 	
 }
 
-No::No(double x, double y){
+No::No(double x, double y, tipo_no tipo, double contorno){
 	this->x=x;
 	this->y=y;
+	this->tipo = tipo;
+	this->contorno = contorno;
 }
 
 void FemCaso::carregarNos(char* filename){
 	FILE *arq;
-	double x0, y0, x1, y1, x2, y2;
+	double x0, y0;
+	double contorno;
+	int tipo;
 	arq = fopen(filename, "r");
 
 	int qtd_nos;
 
+
+	fscanf(arq, "%d", &qtd_nos);
+
 	nos.reserve(qtd_nos);    // make room for 10 elements
 
 
-	fscanf(arq, "%d", &qtd_nos);
 	for (int i = 0; i < qtd_nos; ++i)
-	{
-		fscanf(arq, "%lf %lf", &x0, &y0);
-		nos.push_back(No(x0, y0));
+	{	
+		fscanf(arq, "%lf %lf %d %lf", &x0, &y0, &tipo, &contorno);
+		No no = No(x0, y0, (tipo_no) tipo, contorno);
+		no.global_ind = i;
+		nos.push_back(no);
 	}
 	
 
@@ -72,10 +80,10 @@ void FemCaso::carregarElementos(char* filename){
 	int no_ind;
 	int qtd_elems;
 
-	nos.reserve(qtd_elems);    // make room for 10 elements
-
 
 	fscanf(arq, "%d", &qtd_elems);
+
+	nos.reserve(qtd_elems);    // make room for 10 elements
 	for (int i = 0; i < qtd_elems; ++i)
 	{	
 		Triangulo elem = Triangulo();
@@ -86,9 +94,19 @@ void FemCaso::carregarElementos(char* filename){
 		
 		elementos.push_back(elem);
 	}
-	
 
 	fclose(arq);
+}
+
+int FemCaso::grausLiberdade(){
+	int n = 0;
+
+	for (int i = 0; i < nos.size(); ++i)
+	{
+		if(nos[i].eh_livre()) n++;
+	}
+
+	return n;
 }
 
 Elemento::~Elemento(){
@@ -96,12 +114,18 @@ Elemento::~Elemento(){
 }
 
 double Elemento::func_form(int pos, double x, double y){
+	throw std::invalid_argument( "Nao implementado" );
 	return 0.0;
 }
 
 double Elemento::dfunc_form(int pos, int var, double x, double y){
+	throw std::invalid_argument( "Nao implementado" );
 	return 0.0;
-	throw std::invalid_argument( "dfunc_form so pode ter var=0 ou var=1" );
+}
+
+double Elemento::matriz_coeff(int vert_ind_0, int vert_ind_1){
+	throw std::invalid_argument( "Nao implementado" );
+	return 0.0;
 }
 
 Triangulo::~Triangulo(){
@@ -112,9 +136,9 @@ Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, doub
 
 	nos.reserve(3);
 
-	nos.push_back(No(x0,y0));
-	nos.push_back(No(x1,y1));
-	nos.push_back(No(x2,y2));
+	nos.push_back(No(x0,y0, livre, 0.0));
+	nos.push_back(No(x1,y1, livre, 0.0));
+	nos.push_back(No(x2,y2, livre, 0.0));
 
 	qtd_nos = 3;
 
@@ -176,6 +200,37 @@ double Triangulo::dfunc_form(int pos, int var, double x, double y){
 
 }
 
+void Triangulo::centro(double * xm, double* ym){
+
+	*xm = (1.0/3) * (nos[0].x + nos[1].x + nos[2].x);
+	*ym = (1.0/3) * (nos[0].y + nos[1].y + nos[2].y);
+
+}
+
+double Triangulo::matriz_coeff(int vert_ind_0, int vert_ind_1){
+
+	double grad0[2], grad1[2];
+
+	double** m = get_Minv();
+
+
+	grad0[0] = m[1][vert_ind_0]; grad0[1] = m[2][vert_ind_0];
+	grad1[0] = m[1][vert_ind_1]; grad1[1] = m[2][vert_ind_1];
+
+	double coeff = grad0[0]*grad1[0] + grad0[1]*grad1[1];
+
+	coeff *= area();
+
+	double xm, ym;
+
+	centro(&xm, &ym);
+
+	coeff *= k_func(xm, ym);
+
+	return coeff;
+
+}
+
 double** Triangulo:: get_Minv(){
 	if(Minv == NULL){
 		double ** M = get_M();
@@ -186,4 +241,8 @@ double** Triangulo:: get_Minv(){
 	} 	
 
 	return Minv;
+}
+
+bool No::eh_livre(){
+	return tipo==livre || tipo==neumann;
 }

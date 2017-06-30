@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "fem.h"
 
 
 
@@ -22,6 +22,8 @@ int main(int argc, char* argv[]){
 
 	double h = 1.0 / (n - 1);
 	double x, y;
+	tipo_no tipo;
+	double valor=0.0;
 
 	//Escrevendo Nos
 	fprintf(nos, "%d\n", n*n);
@@ -31,7 +33,13 @@ int main(int argc, char* argv[]){
 		for (int i = 0; i < n; ++i)	
 		{	
 			x = i*h;
-			fprintf(nos, "%f %f\n", x, y);
+			if(i==0||j==0||i==n-1||j==n-1){
+				tipo = dirichlet;	
+			} 
+			else {
+				tipo = livre;
+			}
+			fprintf(nos, "%f %f %d %f\n", x, y, tipo, valor);
 		}
 
 	}
