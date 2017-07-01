@@ -168,17 +168,17 @@ TEST(Matematica, Inversa3Teste) {
   A[2][0]=7;A[2][1]=8;A[2][2]=8;
   inversa3(A, Ainv);
 
-  EXPECT_TRUE(abs(Ainv[0][0] + 2.666667) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[0][1] - 2.666667) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[0][2] + 1.000000) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[0][0] + 2.666667) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[0][1] - 2.666667) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[0][2] + 1.000000) <  1e-4);
 
-  EXPECT_TRUE(abs(Ainv[1][0] - 3.333333) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[1][1] + 4.333333) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[1][2] - 2.000000) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[1][0] - 3.333333) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[1][1] + 4.333333) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[1][2] - 2.000000) <  1e-4);
 
-  EXPECT_TRUE(abs(Ainv[2][0] + 1.000000) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[2][1] - 2.000000) <  1e-4);
-  EXPECT_TRUE(abs(Ainv[2][2] + 1.000000) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[2][0] + 1.000000) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[2][1] - 2.000000) <  1e-4);
+  EXPECT_TRUE(fabs(Ainv[2][2] + 1.000000) <  1e-4);
 }
 
 
