@@ -10,13 +10,15 @@ using namespace std;
 int caso = 1;
 
 double solucao(double x, double y){
-	return x*y*(1-x)*(1-y);
+	if(caso == 1) return x*y*(1-x)*(1-y);
+	if(caso == 4) return x/(x*x + y*y);
+	return 0.0;
 }
 
 //Funcoes para serem modificadas
 double k_func_2(double x, double y){
 	if(caso==1 || caso == 2) return 1+x*y*y;;
-	if(caso == 3) return 1.0;
+	if(caso == 3 || caso == 4) return 1.0;
 
 }
 
@@ -31,6 +33,17 @@ double lado_direito(double x, double y){
 	}
 
 	if(caso == 3) return 0.0;
+
+	if(caso == 4){
+		double x2=x*x, x3=x2*x, x4=x3*x;
+		double y2=y*y, y3=y2*y, y4=y3*y;	
+		double f;
+
+		//derivada em relacao a x
+		f = 2*x*(x2 - 3*y2)/ pow(x2 + y2, 3); 
+		f += - 2*x*(x2 - 3*y2)/ pow(x2 + y2, 3); 
+		return 0.0;
+	}
 }
 
 
@@ -43,10 +56,12 @@ int main(int argc, char **args) {
 	PetscScalar val;
 	int i;
 
-	if (argc > 2)
+	if (argc > 1)
 	{
 		caso = atoi(args[1]);
 	}
+
+	printf("CASO = %d\n", caso);
 
 
 	FemCaso fem = FemCaso();
@@ -163,13 +178,11 @@ int main(int argc, char **args) {
 
    	out = fopen("saida.txt", "w");
 
-
    	for (int i = 0; i < fem.nos.size(); ++i)
    	{
    		no0 = fem.nos[i];
-
+   		solanalitica = solucao(no0->x, no0->y);
    		if(no0->eh_livre()){
-   			solanalitica = solucao(no0->x, no0->y);
    			ix[0]=no0->matriz_ind;
    			VecGetValues(xsol, 1, ix, solcalc);
    			erro += (solcalc[0]-solanalitica)*(solcalc[0]-solanalitica);
