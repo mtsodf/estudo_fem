@@ -133,6 +133,10 @@ int main(int argc, char **args) {
 
    	double erro = 0.0;
 
+   	FILE* out;
+
+   	out = fopen("saida.txt", "w");
+
 
    	for (int i = 0; i < fem.nos.size(); ++i)
    	{
@@ -144,6 +148,9 @@ int main(int argc, char **args) {
    			VecGetValues(xsol, 1, ix, solcalc);
    			erro += (solcalc[0]-solanalitica)*(solcalc[0]-solanalitica);
    			if(N<10) printf("%d Calc: %8.4lf Sol: %8.4lf\n", i, solcalc[0], solanalitica);
+   			fprintf(out, "%lf %lf %lf\n", no0->x, no0->y, solcalc[0]);
+   		} else{
+   			fprintf(out, "%lf %lf %lf\n", no0->x, no0->y, no0->contorno);
    		}
    	}
 
@@ -151,6 +158,9 @@ int main(int argc, char **args) {
 
    	printf("Erro: %e\n", erro); 
 	
+
+   	fclose(out);
+
 	ierr = VecDestroy(&ld);CHKERRQ(ierr);
 
 	ierr = MatDestroy(&matR);CHKERRQ(ierr);
