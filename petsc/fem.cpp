@@ -1,14 +1,29 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "fem.h"
-#include <math.h>
+#include <cmath>
 #include <stdexcept>
 
+//Funcoes para serem modificadas
+double k_func_2(double x, double y){
+	return 1+x*y*y;;
+}
 
+double lado_direito(double x, double y){
+	double x2=x*x, x3=x2*x, x4=x3*x;
+	double y2=y*y, y3=y2*y, y4=y3*y;
+
+	return -y3 + y4 + 4*y3*x - 4*y4*x + 2*y - 2*y2 - 2*x2*y + 6*x2*y2 + 2*x3*y - 6*x3*y2 + 2*x -2*x2;
+}
+
+
+
+//Implementacoes
 double det3(double ** A){
 	double det = 0;
 	return ((A[0][0]*A[1][1]*A[2][2])+(A[0][1]*A[1][2]*A[2][0])+(A[0][2]*A[1][0]*A[2][1]))-((A[2][0]*A[1][1]*A[0][2])+(A[2][1]*A[1][2]*A[0][0])+(A[2][2]*A[1][0]*A[0][1])); 
 }
+
 
 void inversa3(double **A, double **Ainv){
 	double det = det3(A);
@@ -40,12 +55,14 @@ void inversa3(double **A, double **Ainv){
 	
 }
 
+
 No::No(double x, double y, tipo_no tipo, double contorno){
 	this->x=x;
 	this->y=y;
 	this->tipo = tipo;
 	this->contorno = contorno;
 }
+
 
 void FemCaso::carregarNos(char* filename){
 	FILE *arq;
@@ -65,14 +82,15 @@ void FemCaso::carregarNos(char* filename){
 	for (int i = 0; i < qtd_nos; ++i)
 	{	
 		fscanf(arq, "%lf %lf %d %lf", &x0, &y0, &tipo, &contorno);
-		No no = No(x0, y0, (tipo_no) tipo, contorno);
-		no.global_ind = i;
+		No* no = new No(x0, y0, (tipo_no) tipo, contorno);
+		no->global_ind = i;
 		nos.push_back(no);
 	}
 	
 
 	fclose(arq);
 }
+
 
 void FemCaso::carregarElementos(char* filename){
 	FILE *arq;
@@ -83,27 +101,29 @@ void FemCaso::carregarElementos(char* filename){
 
 	fscanf(arq, "%d", &qtd_elems);
 
-	nos.reserve(qtd_elems);    // make room for 10 elements
+	elementos.reserve(qtd_elems);    
 	for (int i = 0; i < qtd_elems; ++i)
 	{	
-		Triangulo elem = Triangulo();
-		for (int i = 0; i < 3; ++i)
+		Triangulo* elem = new Triangulo();
+		for (int j = 0; j < 3; ++j)
 		{
 			fscanf(arq, "%d", &no_ind);
+			elem->nos.push_back(nos[no_ind]);
+			//printf("Adicionando no %d ao elemento %d. Local %d\n", no_ind, i, j);
 		}
-		
 		elementos.push_back(elem);
 	}
 
 	fclose(arq);
 }
 
+
 int FemCaso::grausLiberdade(){
 	int n = 0;
 
 	for (int i = 0; i < nos.size(); ++i)
 	{
-		if(nos[i].eh_livre()) n++;
+		if(nos[i]->eh_livre()) nos[i]->matriz_ind = n++;
 	}
 
 	return n;
@@ -113,20 +133,36 @@ Elemento::~Elemento(){
 
 }
 
+
 double Elemento::func_form(int pos, double x, double y){
-	throw std::invalid_argument( "Nao implementado" );
+	throw std::invalid_argument( "Nao implementado func_form" );
 	return 0.0;
 }
+
 
 double Elemento::dfunc_form(int pos, int var, double x, double y){
-	throw std::invalid_argument( "Nao implementado" );
+	throw std::invalid_argument( "Nao implementado dfunc_form"  );
 	return 0.0;
 }
 
+
 double Elemento::matriz_coeff(int vert_ind_0, int vert_ind_1){
-	throw std::invalid_argument( "Nao implementado" );
+	throw std::invalid_argument( "Nao implementado matriz_coeff" );
 	return 0.0;
 }
+
+double Elemento::fem_lado_direito(int vert_ind){
+	throw std::invalid_argument( "Nao implementado fem_lado_direito" );
+	return 0.0;
+}
+
+void Elemento::printNos(){
+	for (int i = 0; i < nos.size(); ++i)
+	{
+		printf("No(%d) = (%lf, %lf)\n", i, nos[i]->x, nos[i]->y);
+	}
+}
+
 
 Triangulo::~Triangulo(){
 
@@ -136,35 +172,41 @@ Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, doub
 
 	nos.reserve(3);
 
-	nos.push_back(No(x0,y0, livre, 0.0));
-	nos.push_back(No(x1,y1, livre, 0.0));
-	nos.push_back(No(x2,y2, livre, 0.0));
+	nos.push_back(new No(x0,y0, livre, 0.0));
+	nos.push_back(new No(x1,y1, livre, 0.0));
+	nos.push_back(new No(x2,y2, livre, 0.0));
 
 	qtd_nos = 3;
 
+	k_func = k_func_2;
+	M = NULL;
+	Minv = NULL;
 }
 
-double k_func_2(double x, double y){
-	return 2;
-}
 
 Triangulo::Triangulo(){
 	nos.reserve(3);
 	qtd_nos = 3;
 	k_func = k_func_2;
-
+	M = NULL;
+	Minv = NULL;
 }
 
 
-
 double Triangulo:: area(){
-	double dx1 = nos[1].x - nos[0].x;
-	double dx2 = nos[2].x - nos[0].x;
+	double dx1 = nos[1]->x - nos[0]->x;
+	double dx2 = nos[2]->x - nos[0]->x;
 
-	double dy1 = nos[1].y - nos[0].y;
-	double dy2 = nos[2].y - nos[0].y;
+	double dy1 = nos[1]->y - nos[0]->y;
+	double dy2 = nos[2]->y - nos[0]->y;
 
-	return 0.5 * abs( dx1*dy2 - dx2*dy1 );
+	return 0.5 * fabs( dx1*dy2 - dx2*dy1 );
+}
+
+
+double Elemento::area(){
+	throw std::invalid_argument( "Nao implementado area para elemento"  );
+	return 0.0;	
 }
 
 
@@ -173,26 +215,28 @@ double** Triangulo:: get_M(){
 		M = (double **) malloc(sizeof(double *) * qtd_nos);
 		for (int i = 0; i < qtd_nos; ++i) M[i] = (double *) malloc(sizeof(double) * qtd_nos);
 		
-		M[0][0] =        1; M[1][0] =        1; M[2][0] =    0;
-		M[0][1] = nos[0].x; M[1][1] = nos[1].x; M[2][1] = nos[2].x;
-		M[0][2] = nos[0].y; M[1][2] = nos[1].y; M[2][2] = nos[2].y;
+		M[0][0] =       1.0; M[0][1] =       1.0; M[0][2] =       1.0;
+		M[1][0] = nos[0]->x; M[1][1] = nos[1]->x; M[1][2] = nos[2]->x;
+		M[2][0] = nos[0]->y; M[2][1] = nos[1]->y; M[2][2] = nos[2]->y;
 
 	} 	
 
 	return M;
 }
 
-double Triangulo::func_form(int pos, double x, double y){
-	double ** Minv = get_Minv();
 
+double Triangulo::func_form(int pos, double x, double y){
+	get_Minv();	
 	return Minv[0][pos] + Minv[1][pos]*x + Minv[2][pos]*y;
 }
 
+
 double Triangulo::dfunc_form(int pos, int var, double x, double y){
-	double ** Minv = get_Minv();
+	get_Minv();
+
 	//derivada em relacao a x
 	if(var == 0 || var == 1){
-		return M[var+1][pos];
+		return Minv[var+1][pos];
 	}
 
 
@@ -200,22 +244,33 @@ double Triangulo::dfunc_form(int pos, int var, double x, double y){
 
 }
 
-void Triangulo::centro(double * xm, double* ym){
+void Triangulo::centro(double* xm, double* ym){
+	baric2cart(1.0/3, 1.0/3, 1.0/3, xm, ym);
 
-	*xm = (1.0/3) * (nos[0].x + nos[1].x + nos[2].x);
-	*ym = (1.0/3) * (nos[0].y + nos[1].y + nos[2].y);
+	return ;
+	*xm = (1.0/3) * (nos[0]->x + nos[1]->x + nos[2]->x);
+	*ym = (1.0/3) * (nos[0]->y + nos[1]->y + nos[2]->y);
 
 }
 
-double Triangulo::matriz_coeff(int vert_ind_0, int vert_ind_1){
+//Transforma coordenadas baricentricas em cartesianas
+void Triangulo::baric2cart(double coord_baricentricas_0, double coord_baricentricas_1, double coord_baricentricas_2, double* x, double* y){
+	*x = coord_baricentricas_0*nos[0]->x + coord_baricentricas_1*nos[1]->x + coord_baricentricas_2*nos[2]->x;
+	*y = coord_baricentricas_0*nos[0]->y + coord_baricentricas_1*nos[1]->y + coord_baricentricas_2*nos[2]->y;
+}
 
+
+double Triangulo::matriz_coeff(int vert_ind_0, int vert_ind_1){
 	double grad0[2], grad1[2];
 
-	double** m = get_Minv();
+	grad0[0] = dfunc_form(vert_ind_0, 0, 0.0, 0.0); 
+	grad0[1] = dfunc_form(vert_ind_0, 1, 0.0, 0.0); 
+	grad1[0] = dfunc_form(vert_ind_1, 0, 0.0, 0.0); 
+	grad1[1] = dfunc_form(vert_ind_1, 1, 0.0, 0.0); 
 
-
-	grad0[0] = m[1][vert_ind_0]; grad0[1] = m[2][vert_ind_0];
-	grad1[0] = m[1][vert_ind_1]; grad1[1] = m[2][vert_ind_1];
+//	printf("grad_%d = (%lf, %lf)\n", vert_ind_0, grad0[0], grad0[1]);
+//	printf("grad_%d = (%lf, %lf)\n", vert_ind_1, grad1[0], grad1[1]);
+//	printf("area    = %e\n", area());
 
 	double coeff = grad0[0]*grad1[0] + grad0[1]*grad1[1];
 
@@ -225,24 +280,37 @@ double Triangulo::matriz_coeff(int vert_ind_0, int vert_ind_1){
 
 	centro(&xm, &ym);
 
+//	printf("k_func  = %lf\n", k_func(xm, ym));
 	coeff *= k_func(xm, ym);
 
 	return coeff;
 
 }
 
+
+double Triangulo::fem_lado_direito(int vert_ind){
+	double xm, ym;
+	centro(&xm, &ym);
+	return area()*lado_direito(xm,ym)*1.0/3;
+}
+
+
 double** Triangulo:: get_Minv(){
 	if(Minv == NULL){
-		double ** M = get_M();
+		get_M();
 		Minv = (double **) malloc(sizeof(double *) * qtd_nos);
 		
 		for (int i = 0; i < qtd_nos; ++i) Minv[i] = (double *) malloc(sizeof(double) * qtd_nos);
 
+		inversa3(M, Minv);
 	} 	
 
 	return Minv;
 }
 
+
 bool No::eh_livre(){
+
 	return tipo==livre || tipo==neumann;
+
 }

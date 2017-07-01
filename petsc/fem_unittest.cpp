@@ -2,6 +2,83 @@
 #include "gtest/gtest.h"
 #include "fem.h"
 
+TEST(Polimorfismo, TrianguloElement){
+  double x0=0.0, y0=0.0;
+  double x1=2.0, y1=0.0;
+  double x2=0.0, y2=1.0;
+  
+  Elemento* elem = new Triangulo(x0,y0,x1,y1,x2,y2);
+  Triangulo* tri = new Triangulo(x0,y0,x1,y1,x2,y2);
+  
+
+  //Teste do polimorfismo
+  EXPECT_EQ(elem->matriz_coeff(0,0), tri->matriz_coeff(0,0));
+  EXPECT_EQ(elem->matriz_coeff(1,0), tri->matriz_coeff(1,0));
+  EXPECT_EQ(elem->matriz_coeff(1,2), tri->matriz_coeff(1,2));
+
+
+
+  //Teste da matriz M;
+  double ** M = tri->get_M();
+  double ** Minv = tri->get_Minv();
+
+
+  EXPECT_EQ(1.0, M[0][0]);
+  EXPECT_EQ(1.0, M[0][1]);
+  EXPECT_EQ(1.0, M[0][2]);
+
+  EXPECT_EQ(0.0, M[1][0]);
+  EXPECT_EQ(2.0, M[1][1]);
+  EXPECT_EQ(0.0, M[1][2]);
+
+  EXPECT_EQ(0.0, M[2][0]);
+  EXPECT_EQ(0.0, M[2][1]);
+  EXPECT_EQ(1.0, M[2][2]);
+
+  EXPECT_EQ(-0.5, Minv[1][0]);
+  EXPECT_EQ(-1.0, Minv[2][0]);
+
+
+  EXPECT_EQ( 0.5, Minv[1][1]);
+  EXPECT_EQ( 0.0, Minv[2][1]);
+
+
+  EXPECT_EQ( 0.0, Minv[1][2]);
+  EXPECT_EQ( 1.0, Minv[2][2]);
+
+  //Teste calculo da area.
+  EXPECT_EQ(1.0, tri->area());
+  EXPECT_EQ(1.0, elem->area());
+
+  //Teste das funcoes de forma
+  EXPECT_EQ(1.0, tri->func_form(0, x0, y0));
+  EXPECT_EQ(0.0, tri->func_form(0, x1, y1));
+  EXPECT_EQ(0.0, tri->func_form(0, x2, y2));
+
+  EXPECT_EQ(0.0, tri->func_form(1, x0, y0));
+  EXPECT_EQ(1.0, tri->func_form(1, x1, y1));
+  EXPECT_EQ(0.0, tri->func_form(1, x2, y2));
+
+  EXPECT_EQ(0.0, tri->func_form(2, x0, y0));
+  EXPECT_EQ(0.0, tri->func_form(2, x1, y1));
+  EXPECT_EQ(1.0, tri->func_form(2, x2, y2));
+
+
+  //Teste dos coeficientes da matriz de rigidez
+  EXPECT_EQ(2.5, elem->matriz_coeff(0,0));
+  EXPECT_EQ(-.5, elem->matriz_coeff(0,1));
+  EXPECT_EQ(-2., elem->matriz_coeff(0,2));
+
+
+  //Teste do valor do centro do triangulo
+  double xm, ym;
+  tri->centro(&xm, &ym);
+  EXPECT_EQ(2.0/3, xm);
+  EXPECT_EQ(1.0/3, ym);
+
+
+
+}
 
 TEST(Matematica, Determinante3Teste) {
 

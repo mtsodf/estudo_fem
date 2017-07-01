@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
 
 	int qtd_triangulos = (n - 1) * (n - 1) * 2;
 
-	fprintf(elementos, "%d\n", (n-1)*(n-1));
+	fprintf(elementos, "%d\n", qtd_triangulos);
 	for (int j = 0; j < n - 1; ++j)
 	{
 		for (int i = 0; i < n - 1; ++i)

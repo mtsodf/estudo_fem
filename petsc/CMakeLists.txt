@@ -4,12 +4,14 @@ project (Estudo_FEM)
 message("Variaveis do PETSC")
 message("PETSC_DIR = " ${PETSC_DIR} )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/modules/")
+
 find_package(PETSc)
 include_directories(${PETSC_INCLUDES})
 
 find_package(MPI)
-
 include_directories(${MPI_C_INCLUDE_PATH})
+
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-lpthread")
 
 add_subdirectory(googletest)
 
