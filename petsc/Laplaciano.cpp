@@ -7,10 +7,32 @@ static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
 
 using namespace std;
 
+int caso = 1;
 
 double solucao(double x, double y){
 	return x*y*(1-x)*(1-y);
 }
+
+//Funcoes para serem modificadas
+double k_func_2(double x, double y){
+	if(caso==1 || caso == 2) return 1+x*y*y;;
+	if(caso == 3) return 1.0;
+
+}
+
+
+
+double lado_direito(double x, double y){
+
+	if(caso == 1 || caso == 2){
+		double x2=x*x, x3=x2*x, x4=x3*x;
+		double y2=y*y, y3=y2*y, y4=y3*y;
+		return -y3 + y4 + 4*y3*x - 4*y4*x + 2*y - 2*y2 - 2*x2*y + 6*x2*y2 + 2*x3*y - 6*x3*y2 + 2*x -2*x2;
+	}
+
+	if(caso == 3) return 0.0;
+}
+
 
 
 int main(int argc, char **args) {
@@ -21,12 +43,16 @@ int main(int argc, char **args) {
 	PetscScalar val;
 	int i;
 
+	if (argc > 2)
+	{
+		caso = atoi(args[1]);
+	}
+
 
 	FemCaso fem = FemCaso();
 
 	fem.carregarNos("nos.txt");
-	fem.carregarElementos("elementos.txt");
-
+	fem.carregarElementos("elementos.txt", k_func_2, lado_direito);
 
 	//Triangulo& a =  fem.elementos[0];
 	printf("k = %lf\n", fem.elementos[0]->k_func(0,0));

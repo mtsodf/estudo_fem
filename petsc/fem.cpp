@@ -4,16 +4,9 @@
 #include <cmath>
 #include <stdexcept>
 
-//Funcoes para serem modificadas
-double k_func_2(double x, double y){
-	return 1+x*y*y;;
-}
 
-double lado_direito(double x, double y){
-	double x2=x*x, x3=x2*x, x4=x3*x;
-	double y2=y*y, y3=y2*y, y4=y3*y;
-
-	return -y3 + y4 + 4*y3*x - 4*y4*x + 2*y - 2*y2 - 2*x2*y + 6*x2*y2 + 2*x3*y - 6*x3*y2 + 2*x -2*x2;
+double default_k(double x, double y){
+	return 2.0;
 }
 
 
@@ -92,7 +85,7 @@ void FemCaso::carregarNos(char* filename){
 }
 
 
-void FemCaso::carregarElementos(char* filename){
+void FemCaso::carregarElementos(char* filename, double (*k_func) (double,double) , double (*lado_direito) (double,double)){
 	FILE *arq;
 	arq = fopen(filename, "r");
 	int no_ind;
@@ -105,6 +98,8 @@ void FemCaso::carregarElementos(char* filename){
 	for (int i = 0; i < qtd_elems; ++i)
 	{	
 		Triangulo* elem = new Triangulo();
+		elem->k_func = k_func;
+		elem->lado_direito = lado_direito;
 		for (int j = 0; j < 3; ++j)
 		{
 			fscanf(arq, "%d", &no_ind);
@@ -156,6 +151,15 @@ double Elemento::fem_lado_direito(int vert_ind){
 	return 0.0;
 }
 
+void Elemento::g_grad(double x, double y, double *g0, double *g1){
+	throw std::invalid_argument( "Nao implementado g_grad" );
+}
+
+double Elemento::area(){
+	throw std::invalid_argument( "Nao implementado area para elemento"  );
+	return 0.0;	
+}
+
 void Elemento::printNos(){
 	for (int i = 0; i < nos.size(); ++i)
 	{
@@ -178,7 +182,7 @@ Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, doub
 
 	qtd_nos = 3;
 
-	k_func = k_func_2;
+	k_func = default_k;
 	M = NULL;
 	Minv = NULL;
 }
@@ -187,7 +191,6 @@ Triangulo::Triangulo(double x0, double y0, double x1, double y1, double x2, doub
 Triangulo::Triangulo(){
 	nos.reserve(3);
 	qtd_nos = 3;
-	k_func = k_func_2;
 	M = NULL;
 	Minv = NULL;
 }
@@ -201,12 +204,6 @@ double Triangulo:: area(){
 	double dy2 = nos[2]->y - nos[0]->y;
 
 	return 0.5 * fabs( dx1*dy2 - dx2*dy1 );
-}
-
-
-double Elemento::area(){
-	throw std::invalid_argument( "Nao implementado area para elemento"  );
-	return 0.0;	
 }
 
 
@@ -291,9 +288,36 @@ double Triangulo::matriz_coeff(int vert_ind_0, int vert_ind_1){
 double Triangulo::fem_lado_direito(int vert_ind){
 	double xm, ym;
 	centro(&xm, &ym);
-	return area()*lado_direito(xm,ym)*1.0/3;
+
+	//parte relativa a funcao f
+	double ld_coeff = area()*lado_direito(xm,ym)*1.0/3;
+
+	//relativa a condicao de contorno de dirichlet
+	double g0, g1, dphi0, dphi1;
+	
+	dphi0 = dfunc_form(vert_ind, 0, xm, ym);
+	dphi1 = dfunc_form(vert_ind, 1, xm, ym);
+
+	g_grad(xm, ym, &g0, &g1);
+	ld_coeff -= (g0*dphi0 + g1*dphi1) * area() * k_func(xm, ym);
+
+	return ld_coeff;
 }
 
+void Triangulo::g_grad(double x, double y, double *g0, double *g1){
+
+	*g0 = 0; *g1 = 0;
+
+	for (int i = 0; i < nos.size(); ++i)
+	{
+		No* no = nos[i];
+		if(no->tipo == dirichlet){
+			*g0 += dfunc_form(i, 0, x, y) * no->contorno;
+			*g1 += dfunc_form(i, 1, x, y) * no->contorno;
+		}
+
+	}
+}
 
 double** Triangulo:: get_Minv(){
 	if(Minv == NULL){

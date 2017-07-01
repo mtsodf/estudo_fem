@@ -1,5 +1,6 @@
 #include <vector>
 
+
 double det3(double **);
 void inversa3(double**, double **);
 
@@ -32,8 +33,10 @@ class Elemento{
 		virtual double dfunc_form(int, int, double, double);
 		virtual double matriz_coeff(int, int);
 		virtual double fem_lado_direito(int);
+		virtual void   g_grad(double, double, double*, double*);
 		void printNos();		
 		double (*k_func) (double,double);
+		double (*lado_direito) (double,double);
 		~Elemento();
 		//acochambrado
 		virtual double area();
@@ -50,6 +53,7 @@ class Triangulo: public Elemento{
 		virtual double dfunc_form(int, int, double, double);
 		virtual double matriz_coeff(int, int);
 		virtual double fem_lado_direito(int);
+		virtual void   g_grad(double, double, double*, double*);
 		void centro(double *, double *);
 		void baric2cart(double, double, double , double* , double*);
 		double ** get_Minv();
@@ -68,6 +72,7 @@ class FemCaso{
 		std::vector<No*> nos;
 		std::vector<Elemento*> elementos;
 		void carregarNos(char*);
-		void carregarElementos(char*);
+		void carregarElementos(char*, double (*) (double,double), double (*) (double,double));
 		int grausLiberdade();
+		
 };
